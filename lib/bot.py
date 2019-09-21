@@ -7,6 +7,7 @@ from urllib.error import URLError, HTTPError, ContentTooShortError
 from time import sleep
 
 from lib.singleton import Singleton
+from lib.product import Product
 
 
 class Bot(object, metaclass=Singleton):
@@ -16,10 +17,12 @@ class Bot(object, metaclass=Singleton):
     _page_number = 0
     _soup = None
     _url = ''
+    _filters = {}
 
     __page_template = ''
 
-    def __init__(self, url='', retry_timeout=1, timeout=0.75, max_page_number=100, debug=False, page_template=''):
+    def __init__(self, url='', retry_timeout=1, timeout=0.75, max_page_number=100, debug=False, page_template='',
+                 filters={}):
         """
         :param url: base url
         :param retry_timeout: time to sleep between 2 consecutive requests on the same page
@@ -32,6 +35,7 @@ class Bot(object, metaclass=Singleton):
         self._max_page_number = max_page_number
         self._debug = debug
         self._timeout = timeout
+        self._filters = filters
         self.__page_template = page_template
 
     @property
@@ -49,6 +53,10 @@ class Bot(object, metaclass=Singleton):
     @property
     def retry_timeout(self):
         return self._retry_timeout
+
+    @property
+    def filters(self):
+        return self._filters
 
     @property
     def url(self):
@@ -162,6 +170,40 @@ class Bot(object, metaclass=Singleton):
         :return:
         """
         return round(100 - (100 * new_price) / old_price, 2)
+
+    def apply_filters(self, product):
+        """
+        Returns True if this product respects all filters and False otherwise
+        :param product: product info
+        :type product: Product
+        :return: boolean
+        """
+        if not self.filters:
+            return True
+
+        if 'max-price' in self.filters:
+            if product.price > self.filters['max-price']:
+                return False
+
+        if 'min-price' in self.filters:
+            if product.price < self.filters['min-price']:
+                return False
+
+        if 'discount' in self.filters:
+            if product.discount < self.filters['discount']:
+                return False
+
+        if 'brands' in self.filters:
+            found = False
+            for brand in self.filters['brands']:
+                if brand.capitalize() in product.name or brand.upper() in product.name or brand.lower() in product.name:
+                    found = True
+                    break
+
+            if not found:
+                return False
+
+        return True
 
     def scrap_deals(self):
         """

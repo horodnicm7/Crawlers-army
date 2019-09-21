@@ -1,8 +1,13 @@
 timeout: 1
 retry-timeout: 2
-max-page-number: 10
+max-page-number: 1
 debug: False
 page-template:
-  - 'https://www.emag.ro/tablete/p{page}/c'
-  - 'https://www.emag.ro/laptopuri/p{page}/c'
-  - 'https://www.emag.ro/telefoane-mobile/p{page}/c'
+    - url: 'https://www.emag.ro/tablete/p{page}/c'
+      filters:
+          max-price: 3000
+          min-price: 1000
+          brands:
+              - 'apple'
+              - 'samsung'
+          discount: 10

@@ -1,4 +1,16 @@
 """
+    Example of config file with filters:
+        debug: False
+        page-template:
+            - url: 'https://www.emag.ro/tablete/p{page}/c'
+              filters:
+                  max-price: 3000
+                  min-price: 1000
+                  brands:
+                      - 'apple'
+                      - 'samsung'
+                  discount: 10
+
     To install:
         pip install beautifulsoup4
         pip install pyyaml
@@ -11,6 +23,7 @@ from time import sleep
 
 from lib.bot import Bot
 from lib.config import Config, InvalidConfig, ConfigNotFound
+from lib.product import Product
 
 warnings.filterwarnings('ignore', category=UserWarning, module='bs4')
 
@@ -18,12 +31,6 @@ warnings.filterwarnings('ignore', category=UserWarning, module='bs4')
 class Emag(Bot):
     def __init__(self, *args, **kwargs):
         super(Emag, self).__init__(*args, **kwargs)
-
-    @staticmethod
-    def display_product(name, old_price, new_price, discount, url=''):
-        print(name)
-        print('Old price: {}\tNew price: {}\nDiscount: {}%'.format(old_price, new_price, discount))
-        print('Url: {}\n'.format(url))
 
     @staticmethod
     def get_old_price(soup):
@@ -91,7 +98,9 @@ class Emag(Bot):
                 if not old_price:
                     old_price = new_price
 
-                Emag.display_product(name_info, old_price, new_price, discount, url)
+                item = Product(new_price=new_price, old_price=old_price, discount=discount, name=name_info, url=url)
+                if self.apply_filters(item):
+                    item.display()
 
             sleep(self.timeout)
 
@@ -111,7 +120,8 @@ def main():
     }
 
     for category in config['page-template']:
-        options['page_template'] = category
+        options['page_template'] = category['url']
+        options['filters'] = category.get('filters')
 
         emag = Emag(**options)
         emag.scrap_deals()
