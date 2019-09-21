@@ -11,14 +11,41 @@ from lib.singleton import Singleton
 
 class Bot(object, metaclass=Singleton):
     _retry_timeout = 0
+    _max_page_number = 100
+    _debug = False
 
     __soup = None
     __url = ''
 
-    def __init__(self, url='', retry_timeout=1):
+    def __init__(self, url='', retry_timeout=1, timeout=0.75, max_page_number=100, debug=False):
+        """
+        :param url: base url
+        :param retry_timeout: time to sleep between 2 consecutive requests on the same page
+        :param timeout: time to sleep between 2 consecutive requests for different pages
+        :param max_page_number: maximum page number to scrap
+        :param debug:
+        """
         self.set_url(url)
         self._retry_timeout = retry_timeout
-        self.bs_class = BeautifulSoup
+        self._max_page_number = max_page_number
+        self._debug = debug
+        self._timeout = timeout
+
+    @property
+    def timeout(self):
+        return self._timeout
+
+    @property
+    def max_page_number(self):
+        return self._max_page_number
+
+    @property
+    def debug(self):
+        return self._debug
+
+    @property
+    def retry_timeout(self):
+        return self._retry_timeout
 
     def set_url(self, url):
         """
@@ -26,15 +53,14 @@ class Bot(object, metaclass=Singleton):
         :return: None
         """
         self.__url = url
-
         if self.__soup:
             del self.__soup
+        self.__soup = BeautifulSoup(self.__url, 'html.parser')
 
-        self.__soup = self.BeautifulSoup(self.__url, 'html.parser')
-
-    def get_valid_user_agent(self):
+    def get_valid_user_agent(self, max_no_hops=10):
         """
         Tries to get a valid user agent in maximum 10 attempts.
+        :param max_no_hops: maximum number of tries to get page content
         :return: 'default-agent' if no valid agent is found or one of the form 'Scrappy1111111'
         """
         # init the robots.txt parser
@@ -53,27 +79,34 @@ class Bot(object, metaclass=Singleton):
 
             no_hops += 1
             # error in finding a valid name
-            if no_hops > 9:
+            if no_hops == max_no_hops:
                 return 'default-agent'
 
         return user_agent
 
-    def download_page(self, url, user_agent, debug=False):
+    def download_page(self, url=None, user_agent=None, max_no_hops=10):
         """
         Downloads the webpage located at url. Tries 10 times to download if the
         page exists (the error code is not in [500, 600) )
         :param url: url to download
         :param user_agent: user agent name
         :param debug: flag to print debug messages or not
+        :param max_no_hops: maximum number of tries to get page content
         :return:
         """
-        if debug:
+        if not url:
+            url = self.__url
+
+        if not user_agent:
+            user_agent = self.get_valid_user_agent()
+
+        if self._debug:
             print('[DEBUG] Downloading: [' + url + '] ... ')
         page = None
         req = urllib.request.Request(url)
         req.add_header('User-agent', user_agent)
 
-        for i in range(10):
+        for i in range(max_no_hops):
             try:
                 response = urllib.request.urlopen(req)
                 page = response.read().decode('utf-8')
@@ -111,13 +144,9 @@ class Bot(object, metaclass=Singleton):
         """
         return round(100 - (100 * new_price) / old_price, 2)
 
-    def scrap_deals(self, debug=False, timeout=0.75, retry_timeout=0.75, max_page_number=100):
+    def scrap_deals(self):
         """
         This method should be overwritten by every child class of this one.
-        :param debug: whether to print debug messages or not
-        :param timeout: timeout between 2 consecutive requests when scrapping multiple pages
-        :param retry_timeout: timeout between 2 consecutive GET requests on same page
-        :param max_page_number: maximum page number to scrap
         :return:
         """
         pass

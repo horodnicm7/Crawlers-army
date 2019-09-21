@@ -18,7 +18,8 @@ class Emag(Bot):
     def __init__(self, *args, **kwargs):
         super(Emag, self).__init__(*args, **kwargs)
 
-    def scrap_deals(self, debug=False, timeout=0.75, retry_timeout=0.75, max_page_number=100):
+    def scrap_deals(self):
+        print(self.download_page())
         pass
 
 
@@ -29,11 +30,14 @@ def main():
         print(str(e))
         return
 
-    timeout = config.get('timeout', 0.75)
-    retry_timeout = config.get('retry-timeout', 0.75)
-    max_page_number = config.get('max-page-number', 100)
+    options = {
+        'url': 'https://www.emag.ro/',
+        'timeout': config.get('timeout', 0.75),
+        'retry_timeout': config.get('retry-timeout', 0.75),
+        'max_page_number': config.get('max-page-number', 100)
+    }
 
-    emag = Emag()
-
+    emag = Emag(**options)
+    emag.scrap_deals()
 
 main()
