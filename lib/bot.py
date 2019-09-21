@@ -57,6 +57,9 @@ class Bot(object, metaclass=Singleton):
             del self.__soup
         self.__soup = BeautifulSoup(self.__url, 'html.parser')
 
+    def get_next_page_url(self, template, tag):
+        pass
+
     def get_valid_user_agent(self, max_no_hops=10):
         """
         Tries to get a valid user agent in maximum 10 attempts.

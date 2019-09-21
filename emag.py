@@ -6,6 +6,7 @@
 import re as regex
 import warnings
 
+from bs4 import BeautifulSoup
 from time import sleep
 
 from lib.bot import Bot
@@ -18,9 +19,67 @@ class Emag(Bot):
     def __init__(self, *args, **kwargs):
         super(Emag, self).__init__(*args, **kwargs)
 
+    @staticmethod
+    def display_product(name, old_price, new_price, discount, url=''):
+        print(name)
+        print('Old price: {}\tNew price: {}\nDiscount: {}%'.format(old_price, new_price, discount))
+        print('Url: {}\n'.format(url))
+
+    @staticmethod
+    def get_old_price(soup):
+        old_price = str(soup.find('p', class_='product-old-price'))
+        matches = regex.search(r'[0-9]*[,.]{1}[0-9]*', old_price, regex.M | regex.I)
+        # maybe it's not a discount
+        if matches:
+            return float(matches.group(0).replace(',', '').replace('.', '').replace('-', '0'))
+
+        return None
+
+    @staticmethod
+    def get_new_price(soup):
+        new_price = str(soup.find('p', class_='product-new-price'))
+        matches = regex.search(r'[0-9]*[,.]{1}[0-9]*', new_price, regex.M | regex.I)
+        # if price is > 1000
+        if matches:
+            new_price = float(matches.group(0).replace(',', '').replace('.', '').replace('-', '0'))
+        else:
+            matches = regex.search(r'[0-9]+', new_price, regex.M | regex.I)
+            new_price = float(matches.group(0).replace('-', '0'))
+
+        return new_price
+
     def scrap_deals(self):
-        print(self.download_page())
-        pass
+        self.set_url('https://www.emag.ro/laptopuri/c')
+        agent = self.get_valid_user_agent()
+        page = self.download_page(user_agent=agent)
+        parser = 'html.parser'
+
+        soup = BeautifulSoup(page, parser)
+        root = str(soup.find('div', id='card_grid'))
+
+        soup = BeautifulSoup(root, parser)
+
+        for product in soup.findAll(class_='card-item js-product-data'):
+            product = str(product)
+
+            soup = BeautifulSoup(product, parser)
+
+            identification = soup.find('h2', class_='card-body product-title-zone')
+
+            try:
+                url = identification.find('a', href=True)['href']
+            except KeyError:
+                url = None
+
+            name_info = str(identification.text).strip()
+            old_price = Emag.get_old_price(soup)
+            new_price = Emag.get_new_price(soup)
+
+            discount = 0
+            if isinstance(old_price, float) and isinstance(new_price, float):
+                discount = self.get_discount(old_price, new_price)
+
+            Emag.display_product(name_info, old_price, new_price, discount, url)
 
 
 def main():
