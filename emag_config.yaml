@@ -1,0 +1,8 @@
+timeout: 1
+retry-timeout: 2
+max-page-number: 10
+debug: False
+page-template:
+  - 'https://www.emag.ro/tablete/p{page}/c'
+  - 'https://www.emag.ro/laptopuri/p{page}/c'
+  - 'https://www.emag.ro/telefoane-mobile/p{page}/c'

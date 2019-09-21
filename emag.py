@@ -49,7 +49,11 @@ class Emag(Bot):
         return new_price
 
     def scrap_deals(self):
+        if not self.url:
+            return
+
         parser = 'html.parser'
+        agent = self.get_valid_user_agent()
 
         while True:
             self.url = self.get_next_page_url()
@@ -57,7 +61,6 @@ class Emag(Bot):
             if not self.url:
                 return
 
-            agent = self.get_valid_user_agent()
             page = self.download_page(user_agent=agent)
 
             soup = BeautifulSoup(page, parser)
@@ -104,10 +107,13 @@ def main():
         'timeout': config.get('timeout', 0.75),
         'retry_timeout': config.get('retry-timeout', 0.75),
         'max_page_number': config.get('max-page-number', 100),
-        'page_template': config.get('page-template', 'https://www.emag.ro/tablete/p{page}/c')
+        'debug': config.get('debug', False)
     }
 
-    emag = Emag(**options)
-    emag.scrap_deals()
+    for category in config['page-template']:
+        options['page_template'] = category
+
+        emag = Emag(**options)
+        emag.scrap_deals()
 
 main()

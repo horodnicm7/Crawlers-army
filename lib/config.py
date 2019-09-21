@@ -14,11 +14,14 @@ class Singleton(type):
 
 class Config(object, metaclass=Singleton):
     def __init__(self, path):
-        self.load_config(path)
         self.__config = dict()
+        self.load_config(path)
 
-    def __getattr__(self, item):
-        return self.__config[item]
+    def __getitem__(self, item):
+        if item in self.__config:
+            return self.__config[item]
+
+        return None
 
     def __setitem__(self, key, value):
         self.__config[key] = value
@@ -27,20 +30,22 @@ class Config(object, metaclass=Singleton):
         if key not in self.__config:
             return fallback
 
+        return self.__config[key]
+
+    def display(self):
+        print(self.__config)
+
     def load_config(self, path):
-        config = None
         try:
             with open(path, 'r') as stream:
                 try:
-                    config = yaml.safe_load(stream)
+                    self.__config = yaml.safe_load(stream)
                 except yaml.YAMLError as exc:
                     print('[DEBUG] Error parsing config file')
                     raise InvalidConfig('Config syntax error')
         except FileNotFoundError:
             print('[DEBUG] Config file not found')
             raise ConfigNotFound('Config file not found')
-
-        self.__config = config
 
 
 class InvalidConfig(Exception):
