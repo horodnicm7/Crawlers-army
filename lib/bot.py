@@ -13,11 +13,13 @@ class Bot(object, metaclass=Singleton):
     _retry_timeout = 0
     _max_page_number = 100
     _debug = False
+    _page_number = 0
+    _soup = None
+    _url = ''
 
-    __soup = None
-    __url = ''
+    __page_template = ''
 
-    def __init__(self, url='', retry_timeout=1, timeout=0.75, max_page_number=100, debug=False):
+    def __init__(self, url='', retry_timeout=1, timeout=0.75, max_page_number=100, debug=False, page_template=''):
         """
         :param url: base url
         :param retry_timeout: time to sleep between 2 consecutive requests on the same page
@@ -25,11 +27,12 @@ class Bot(object, metaclass=Singleton):
         :param max_page_number: maximum page number to scrap
         :param debug:
         """
-        self.set_url(url)
+        self._url = url
         self._retry_timeout = retry_timeout
         self._max_page_number = max_page_number
         self._debug = debug
         self._timeout = timeout
+        self.__page_template = page_template
 
     @property
     def timeout(self):
@@ -47,18 +50,31 @@ class Bot(object, metaclass=Singleton):
     def retry_timeout(self):
         return self._retry_timeout
 
+    @property
+    def url(self):
+        return self._url
+
+    @url.setter
+    def url(self, value):
+        self._url = value
+
     def set_url(self, url):
         """
         :param url: url to scrap
         :return: None
         """
-        self.__url = url
-        if self.__soup:
-            del self.__soup
-        self.__soup = BeautifulSoup(self.__url, 'html.parser')
+        self._url = url
+        if self._soup:
+            del self._soup
+        self._soup = BeautifulSoup(self._url, 'html.parser')
 
-    def get_next_page_url(self, template, tag):
-        pass
+    def get_next_page_url(self):
+        self._page_number += 1
+
+        if self._page_number > self._max_page_number:
+            return None
+
+        return self.__page_template.format(page=self._page_number)
 
     def get_valid_user_agent(self, max_no_hops=10):
         """
@@ -68,13 +84,13 @@ class Bot(object, metaclass=Singleton):
         """
         # init the robots.txt parser
         parser = robotparser.RobotFileParser()
-        parser.set_url(self.__url + '/robots.txt')
+        parser.set_url(self._url + '/robots.txt')
         parser.read()
 
         # trying to get a valid agent name in less than 10 attempts
         user_agent = 'Scrappy'
         no_hops = 0
-        while not parser.can_fetch(user_agent, self.__url):
+        while not parser.can_fetch(user_agent, self._url):
             if user_agent[-1].isdigit():
                 user_agent = user_agent[:-1] + str(int(user_agent[-1]) + 1)
             else:
@@ -98,7 +114,7 @@ class Bot(object, metaclass=Singleton):
         :return:
         """
         if not url:
-            url = self.__url
+            url = self._url
 
         if not user_agent:
             user_agent = self.get_valid_user_agent()
@@ -129,7 +145,7 @@ class Bot(object, metaclass=Singleton):
         :param cls: tag unique identifier
         :return:
         """
-        content = self.__soup.find(tag, cls)
+        content = self._soup.find(tag, cls)
 
         if not content:
             return None

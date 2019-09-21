@@ -49,37 +49,48 @@ class Emag(Bot):
         return new_price
 
     def scrap_deals(self):
-        self.set_url('https://www.emag.ro/laptopuri/c')
-        agent = self.get_valid_user_agent()
-        page = self.download_page(user_agent=agent)
         parser = 'html.parser'
 
-        soup = BeautifulSoup(page, parser)
-        root = str(soup.find('div', id='card_grid'))
+        while True:
+            self.url = self.get_next_page_url()
 
-        soup = BeautifulSoup(root, parser)
+            if not self.url:
+                return
 
-        for product in soup.findAll(class_='card-item js-product-data'):
-            product = str(product)
+            agent = self.get_valid_user_agent()
+            page = self.download_page(user_agent=agent)
 
-            soup = BeautifulSoup(product, parser)
+            soup = BeautifulSoup(page, parser)
+            root = str(soup.find('div', id='card_grid'))
 
-            identification = soup.find('h2', class_='card-body product-title-zone')
+            soup = BeautifulSoup(root, parser)
 
-            try:
-                url = identification.find('a', href=True)['href']
-            except KeyError:
-                url = None
+            for product in soup.findAll(class_='card-item js-product-data'):
+                product = str(product)
 
-            name_info = str(identification.text).strip()
-            old_price = Emag.get_old_price(soup)
-            new_price = Emag.get_new_price(soup)
+                soup = BeautifulSoup(product, parser)
 
-            discount = 0
-            if isinstance(old_price, float) and isinstance(new_price, float):
-                discount = self.get_discount(old_price, new_price)
+                identification = soup.find('h2', class_='card-body product-title-zone')
 
-            Emag.display_product(name_info, old_price, new_price, discount, url)
+                try:
+                    url = identification.find('a', href=True)['href']
+                except KeyError:
+                    url = None
+
+                name_info = str(identification.text).strip()
+                old_price = Emag.get_old_price(soup)
+                new_price = Emag.get_new_price(soup)
+
+                discount = 0
+                if isinstance(old_price, float) and isinstance(new_price, float):
+                    discount = self.get_discount(old_price, new_price)
+
+                if not old_price:
+                    old_price = new_price
+
+                Emag.display_product(name_info, old_price, new_price, discount, url)
+
+            sleep(self.timeout)
 
 
 def main():
@@ -87,13 +98,13 @@ def main():
         config = Config(__file__[:-3] + '_config.yaml')
     except (ConfigNotFound, InvalidConfig) as e:
         print(str(e))
-        return
 
     options = {
         'url': 'https://www.emag.ro/',
         'timeout': config.get('timeout', 0.75),
         'retry_timeout': config.get('retry-timeout', 0.75),
-        'max_page_number': config.get('max-page-number', 100)
+        'max_page_number': config.get('max-page-number', 100),
+        'page_template': config.get('page-template', 'https://www.emag.ro/tablete/p{page}/c')
     }
 
     emag = Emag(**options)
