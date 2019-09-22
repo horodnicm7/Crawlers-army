@@ -1,6 +1,6 @@
 timeout: 1
 retry-timeout: 2
-max-page-number: 1
-debug: False
+max-page-number: 100
+debug: True
 page-template:
-    - url: 'https://www.pcgarage.ro/smartwatch/pagina{page}/'
+    - url: 'https://www.pcgarage.ro/notebook-laptop/pagina{page}/'

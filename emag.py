@@ -20,6 +20,7 @@ import warnings
 
 from bs4 import BeautifulSoup
 from time import sleep
+from urllib.parse import urlparse
 
 from lib.bot import Bot
 from lib.config import Config, InvalidConfig, ConfigNotFound
@@ -59,6 +60,9 @@ class Emag(Bot):
 
         parser = 'html.parser'
         agent = self.get_valid_user_agent()
+        url_path = urlparse(self._page_template)
+        trap_url = url_path.path.format(page=2)
+        print(trap_url)
 
         while True:
             self.url = self.get_next_page_url()
@@ -69,8 +73,14 @@ class Emag(Bot):
             page = self.download_page(user_agent=agent)
 
             soup = BeautifulSoup(page, parser)
-            root = str(soup.find('div', id='card_grid'))
 
+            # check if you passed the last page. Emag doesn't return 404, but the
+            # first page and so it makes crawlers to go into an infinite loop
+            next_page = soup.find("link", {"rel": "next"})
+            if next_page and trap_url in str(next_page):
+                return
+
+            root = str(soup.find('div', id='card_grid'))
             soup = BeautifulSoup(root, parser)
 
             for product in soup.findAll(class_='card-item js-product-data'):
@@ -98,8 +108,8 @@ class Emag(Bot):
 
                 item = Product(new_price=new_price, old_price=old_price, discount=discount, name=name_info, url=url)
                 if self.apply_filters(item):
-                    item.display()
-
+                    #item.display()
+                    pass
             sleep(self.timeout)
 
 
@@ -123,5 +133,6 @@ def main():
 
         emag = Emag(**options)
         emag.scrap_deals()
+
 
 main()

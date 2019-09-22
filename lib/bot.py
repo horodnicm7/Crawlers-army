@@ -19,7 +19,7 @@ class Bot(object, metaclass=Singleton):
     _url = ''
     _filters = {}
 
-    __page_template = ''
+    _page_template = ''
 
     def __init__(self, url='', retry_timeout=1, timeout=0.75, max_page_number=100, debug=False, page_template='',
                  filters={}):
@@ -36,7 +36,7 @@ class Bot(object, metaclass=Singleton):
         self._debug = debug
         self._timeout = timeout
         self._filters = filters
-        self.__page_template = page_template
+        self._page_template = page_template
 
     @property
     def timeout(self):
@@ -79,10 +79,13 @@ class Bot(object, metaclass=Singleton):
     def get_next_page_url(self):
         self._page_number += 1
 
+        if self.debug:
+            print('[DEBUG] Preparing page {}'.format(self._page_number))
+
         if self._page_number > self._max_page_number:
             return None
 
-        return self.__page_template.format(page=self._page_number)
+        return self._page_template.format(page=self._page_number)
 
     def get_valid_user_agent(self, max_no_hops=10):
         """

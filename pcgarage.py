@@ -70,43 +70,51 @@ class PCGarage(Bot):
         parser = 'html.parser'
         agent = self.get_valid_user_agent()
 
-        self.url = self.get_next_page_url()
+        while True:
+            self.url = self.get_next_page_url()
 
-        if not self.url:
-            return
+            if not self.url:
+                return
 
-        page = self.download_page(user_agent=agent)
+            page = self.download_page(user_agent=agent)
 
-        soup = BeautifulSoup(page, parser)
-        root = str(soup.find('div', class_='grid-products clearfix product-list-container'))
+            if not page:
+                if self.debug:
+                    print('[DEBUG] could not download page: {}'.format(self.url))
+                return
 
-        soup = BeautifulSoup(root, parser)
+            soup = BeautifulSoup(page, parser)
+            root = str(soup.find('div', class_='grid-products clearfix product-list-container'))
 
-        for product in soup.findAll(class_='product-box-container'):
-            product = str(product)
-            soup = BeautifulSoup(product, parser)
+            soup = BeautifulSoup(root, parser)
 
-            identification = soup.find('div', class_='pb-name')
-            try:
-                url = identification.find('a', href=True)['href']
-            except KeyError:
-                url = None
+            for product in soup.findAll(class_='product-box-container'):
+                product = str(product)
+                soup = BeautifulSoup(product, parser)
 
-            name_info = str(identification.text).strip()
+                identification = soup.find('div', class_='pb-name')
+                try:
+                    url = identification.find('a', href=True)['href']
+                except KeyError:
+                    url = None
 
-            old_price = self.get_old_price(soup)
-            new_price = self.get_new_price(soup)
+                name_info = str(identification.text).strip()
 
-            discount = 0
-            if isinstance(old_price, float) and isinstance(new_price, float):
-                discount = self.get_discount(old_price, new_price)
+                old_price = self.get_old_price(soup)
+                new_price = self.get_new_price(soup)
 
-            if not old_price:
-                old_price = new_price
+                discount = 0
+                if isinstance(old_price, float) and isinstance(new_price, float):
+                    discount = self.get_discount(old_price, new_price)
 
-            item = Product(new_price=new_price, old_price=old_price, discount=discount, name=name_info, url=url)
-            if self.apply_filters(item):
-                item.display()
+                if not old_price:
+                    old_price = new_price
+
+                item = Product(new_price=new_price, old_price=old_price, discount=discount, name=name_info, url=url)
+                if self.apply_filters(item):
+                    item.display()
+
+            sleep(self.timeout)
 
 
 def main():
@@ -129,5 +137,6 @@ def main():
 
         pcgarage = PCGarage(**options)
         pcgarage.scrap_deals()
+
 
 main()
