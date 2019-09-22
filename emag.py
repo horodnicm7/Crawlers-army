@@ -108,8 +108,8 @@ class Emag(Bot):
 
                 item = Product(new_price=new_price, old_price=old_price, discount=discount, name=name_info, url=url)
                 if self.apply_filters(item):
-                    #item.display()
-                    pass
+                    item.display()
+
             sleep(self.timeout)
 
 
