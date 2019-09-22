@@ -1,0 +1,6 @@
+timeout: 1
+retry-timeout: 2
+max-page-number: 1
+debug: False
+page-template:
+    - url: 'https://www.pcgarage.ro/smartwatch/pagina{page}/'

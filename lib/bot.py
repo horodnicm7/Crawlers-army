@@ -211,3 +211,19 @@ class Bot(object, metaclass=Singleton):
         :return:
         """
         pass
+
+    def get_old_price(self, soup):
+        """
+        This method should be overwritten by every child class of this one.
+        :param soup: BeautifulSoup instance
+        :return:
+        """
+        pass
+
+    def get_new_price(self, soup):
+        """
+        This method should be overwritten by every child class of this one.
+        :param soup: BeautifulSoup instance
+        :return:
+        """
+        pass

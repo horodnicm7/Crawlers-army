@@ -32,8 +32,7 @@ class Emag(Bot):
     def __init__(self, *args, **kwargs):
         super(Emag, self).__init__(*args, **kwargs)
 
-    @staticmethod
-    def get_old_price(soup):
+    def get_old_price(self, soup):
         old_price = str(soup.find('p', class_='product-old-price'))
         matches = regex.search(r'[0-9]*[,.]{1}[0-9]*', old_price, regex.M | regex.I)
         # maybe it's not a discount
@@ -42,8 +41,7 @@ class Emag(Bot):
 
         return None
 
-    @staticmethod
-    def get_new_price(soup):
+    def get_new_price(self, soup):
         new_price = str(soup.find('p', class_='product-new-price'))
         matches = regex.search(r'[0-9]*[,.]{1}[0-9]*', new_price, regex.M | regex.I)
         # if price is > 1000
@@ -88,8 +86,8 @@ class Emag(Bot):
                     url = None
 
                 name_info = str(identification.text).strip()
-                old_price = Emag.get_old_price(soup)
-                new_price = Emag.get_new_price(soup)
+                old_price = self.get_old_price(soup)
+                new_price = self.get_new_price(soup)
 
                 discount = 0
                 if isinstance(old_price, float) and isinstance(new_price, float):
