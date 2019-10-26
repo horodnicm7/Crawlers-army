@@ -1,0 +1,8 @@
+timeout: 1
+retry-timeout: 1
+max-page-number: 100
+debug: True
+page-template:
+    - url: 'https://www.cel.ro/laptop-laptopuri/0a-{page}'
+      filters:
+          ""

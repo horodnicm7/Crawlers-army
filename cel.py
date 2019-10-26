@@ -20,6 +20,7 @@ import warnings
 
 from bs4 import BeautifulSoup
 from time import sleep
+from urllib.parse import urlparse
 
 from lib.bot import Bot
 from lib.config import Config, InvalidConfig, ConfigNotFound
@@ -28,40 +29,35 @@ from lib.product import Product
 warnings.filterwarnings('ignore', category=UserWarning, module='bs4')
 
 
-class Flanco(Bot):
+class Cel(Bot):
     def __init__(self, *args, **kwargs):
-        super(Flanco, self).__init__(*args, **kwargs)
+        super(Cel, self).__init__(*args, **kwargs)
 
     def get_old_price(self, soup):
-        old_price = soup.find('div', class_='produs-oldprice-old')
+        old_price = soup.find('div', class_='pret_v')
 
         if old_price:
             old_price = old_price.text
-            matches = regex.search(r'[0-9]*[,.]{1}[0-9]*[,]*[0-9]*', old_price, regex.M | regex.I)
+            matches = regex.search(r'[0-9,.]+', old_price, regex.M | regex.I)
 
             raw_price = matches.group(0).replace('-', '0').replace(',', '.')
             if raw_price.count('.') > 1:
                 raw_price = raw_price.replace('.', '', 1)
+
             return float(raw_price)
 
         return None
 
     def get_new_price(self, soup):
         # somehow this class name is different from the one on browser
-        new_price = soup.find('div', class_='produs-price')
+        new_price = soup.find('div', class_='pret_n')
 
         if not new_price:
-            new_price = soup.find('p', class_='produs-price')
+            return None
 
-            if not new_price:
-                return None
+        new_price = new_price.text
 
-        new_price = str(new_price)
-
-        new_soup = BeautifulSoup(new_price, self.parser)
-        new_price = new_soup.find('span', class_='price').text
-
-        matches = regex.search(r'[0-9]*[,.]{1}[0-9]*[,]*[0-9]*', new_price, regex.M | regex.I)
+        matches = regex.search(r'[0-9,.]+', new_price, regex.M | regex.I)
 
         raw_price = matches.group(0).replace('-', '0').replace(',', '.')
         if raw_price.count('.') > 1:
@@ -76,6 +72,9 @@ class Flanco(Bot):
             return
 
         agent = self.get_valid_user_agent()
+        url_path = urlparse(self._page_template)
+        trap_url = url_path.path.format(page=2)
+        long_way_passed = False
 
         while True:
             self.url = self.get_next_page_url()
@@ -86,22 +85,28 @@ class Flanco(Bot):
             page = self.download_page(user_agent=agent)
             soup = BeautifulSoup(page, self.parser)
 
-            root = soup.find('div', id='products-wrapper')
+            # check if you passed the last page. Cel.ro doesn't return 404, but the
+            # first page and so it makes crawlers to go into an infinite loop
+            next_page = soup.find("link", {"rel": "next"})
+            if next_page and trap_url in str(next_page) and long_way_passed:
+                return
+
+            root = soup.find('div', class_='productlisting')
 
             if not root:
                 break
 
             soup = BeautifulSoup(str(root), self.parser)
 
-            for product in soup.findAll(class_='produs'):
+            for product in soup.findAll(class_='product_data productListing-tot'):
                 product = str(product)
 
                 soup = BeautifulSoup(product, self.parser)
 
-                identification = soup.find('div', class_='produs-title')
+                identification = soup.find('h2', class_='productTitle')
 
                 try:
-                    url = identification.find('a', href=True)['href']
+                    url = 'https://www.cel.ro' + identification.find('a', href=True)['href']
                 except KeyError:
                     url = None
 
@@ -124,6 +129,7 @@ class Flanco(Bot):
                 if self.apply_filters(item):
                     item.display()
 
+            long_way_passed = True
             sleep(self.timeout)
 
 
@@ -134,7 +140,7 @@ def main():
         print(str(e))
 
     options = {
-        'url': 'https://www.flanco.ro/',
+        'url': 'https://www.cel.ro/',
         'timeout': config.get('timeout', 0.75),
         'retry_timeout': config.get('retry-timeout', 0.75),
         'max_page_number': config.get('max-page-number', 100),
@@ -145,8 +151,8 @@ def main():
         options['page_template'] = category['url']
         options['filters'] = category.get('filters')
 
-        flanco = Flanco(**options)
-        flanco.scrap_deals()
+        cel = Cel(**options)
+        cel.scrap_deals()
 
 
 main()
