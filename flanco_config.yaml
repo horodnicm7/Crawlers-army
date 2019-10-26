@@ -1,0 +1,11 @@
+timeout: 1
+retry-timeout: 1
+max-page-number: 100
+debug: True
+page-template:
+    - url: 'https://www.flanco.ro/telefoane-tablete/smartphone/p/{page}.html'
+      filters:
+          ""
+    - url: 'https://www.flanco.ro/telefoane-tablete/smartwatch-si-smartband/smartwatch/p/{page}.html'
+      filters:
+          ""

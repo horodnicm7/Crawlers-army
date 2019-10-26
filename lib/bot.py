@@ -37,6 +37,7 @@ class Bot(object, metaclass=Singleton):
         self._timeout = timeout
         self._filters = filters
         self._page_template = page_template
+        self.parser = 'html.parser'
 
     @property
     def timeout(self):
