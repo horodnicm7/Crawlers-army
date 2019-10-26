@@ -63,6 +63,7 @@ class Emag(Bot):
         url_path = urlparse(self._page_template)
         trap_url = url_path.path.format(page=2)
         print(trap_url)
+        long_way_passed = False  # to signal that crawling has started and to avoid interruption at first page
 
         while True:
             self.url = self.get_next_page_url()
@@ -77,7 +78,7 @@ class Emag(Bot):
             # check if you passed the last page. Emag doesn't return 404, but the
             # first page and so it makes crawlers to go into an infinite loop
             next_page = soup.find("link", {"rel": "next"})
-            if next_page and trap_url in str(next_page):
+            if next_page and trap_url in str(next_page) and long_way_passed:
                 return
 
             root = str(soup.find('div', id='card_grid'))
@@ -110,6 +111,7 @@ class Emag(Bot):
                 if self.apply_filters(item):
                     item.display()
 
+            long_way_passed = True
             sleep(self.timeout)
 
 
