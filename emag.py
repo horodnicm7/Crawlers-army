@@ -124,7 +124,7 @@ def main():
         print(str(e))
 
     options = {
-        'url': 'https://www.emag.ro/',
+        'url': 'https://www.emag.ro',
         'timeout': config.get('timeout', 0.75),
         'retry_timeout': config.get('retry-timeout', 0.75),
         'max_page_number': config.get('max-page-number', 100),

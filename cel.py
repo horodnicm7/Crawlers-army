@@ -72,9 +72,7 @@ class Cel(Bot):
             return
 
         agent = self.get_valid_user_agent()
-        url_path = urlparse(self._page_template)
-        trap_url = url_path.path.format(page=2)
-        long_way_passed, has_sort = False, self.sort is not None
+        has_sort = self.sort is not None
 
         if has_sort:
             products = []
@@ -88,10 +86,7 @@ class Cel(Bot):
             page = self.download_page(user_agent=agent)
             soup = BeautifulSoup(page, self.parser)
 
-            # check if you passed the last page. Cel.ro doesn't return 404, but the
-            # first page and so it makes crawlers to go into an infinite loop
-            next_page = soup.find("link", {"rel": "next"})
-            if next_page and trap_url in str(next_page) and long_way_passed:
+            if self.is_cheap_trap(soup):
                 break
 
             root = soup.find('div', class_='productlisting')
@@ -135,7 +130,6 @@ class Cel(Bot):
                     else:
                         item.display()
 
-            long_way_passed = True
             sleep(self.timeout)
 
         if has_sort:
@@ -151,7 +145,7 @@ def main():
         print(str(e))
 
     options = {
-        'url': 'https://www.cel.ro/',
+        'url': 'https://www.cel.ro',
         'timeout': config.get('timeout', 0.75),
         'retry_timeout': config.get('retry-timeout', 0.75),
         'max_page_number': config.get('max-page-number', 100),

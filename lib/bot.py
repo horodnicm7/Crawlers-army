@@ -6,7 +6,6 @@ from urllib import robotparser
 from urllib.error import URLError, HTTPError, ContentTooShortError
 from time import sleep
 
-from lib.singleton import Singleton
 from lib.product import Product
 
 

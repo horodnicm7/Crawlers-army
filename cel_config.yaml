@@ -3,6 +3,28 @@ retry-timeout: 1
 max-page-number: 100
 debug: True
 page-template:
+    - url: 'https://www.cel.ro/gadgeturi/0a-{page}'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+    - url: ''
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
     - url: 'https://www.cel.ro/laptop-laptopuri/0a-{page}'
       sort:
         discount: 'descending'
