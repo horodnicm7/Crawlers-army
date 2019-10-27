@@ -20,7 +20,6 @@ import warnings
 
 from bs4 import BeautifulSoup
 from time import sleep
-from urllib.parse import urlparse
 
 from lib.bot import Bot
 from lib.config import Config, InvalidConfig, ConfigNotFound
@@ -60,10 +59,6 @@ class Emag(Bot):
 
         parser = 'html.parser'
         agent = self.get_valid_user_agent()
-        url_path = urlparse(self._page_template)
-        trap_url = url_path.path.format(page=2)
-        print(trap_url)
-        long_way_passed = False  # to signal that crawling has started and to avoid interruption at first page
         has_sort = self.sort is not None
         products = []
 
@@ -77,10 +72,7 @@ class Emag(Bot):
 
             soup = BeautifulSoup(page, parser)
 
-            # check if you passed the last page. Emag doesn't return 404, but the
-            # first page and so it makes crawlers to go into an infinite loop
-            next_page = soup.find("link", {"rel": "next"})
-            if next_page and trap_url in str(next_page) and long_way_passed:
+            if self.is_cheap_trap(soup):
                 break
 
             root = str(soup.find('div', id='card_grid'))
@@ -116,11 +108,11 @@ class Emag(Bot):
                     else:
                         item.display()
 
-            long_way_passed = True
             sleep(self.timeout)
 
         if has_sort:
             products = self.apply_sort_criteria(products)
+            print("Displaying....")
             for item in products:
                 item.display()
 
@@ -146,6 +138,7 @@ def main():
 
         emag = Emag(**options)
         emag.scrap_deals()
+        print("")
 
 
 main()

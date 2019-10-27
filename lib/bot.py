@@ -10,7 +10,7 @@ from lib.singleton import Singleton
 from lib.product import Product
 
 
-class Bot(object, metaclass=Singleton):
+class Bot(object):
     _retry_timeout = 0
     _max_page_number = 100
     _debug = False
@@ -41,7 +41,10 @@ class Bot(object, metaclass=Singleton):
         self._filters = filters
         self._sort = sort
         self._page_template = page_template
+
         self.parser = 'html.parser'
+        self.crawled_fpage = False
+        self.first_page = ''
 
     @property
     def sort(self):
@@ -256,6 +259,24 @@ class Bot(object, metaclass=Singleton):
             return products
 
         return products
+
+    def is_cheap_trap(self, soup):
+        """
+        Method used to test loops, because those f***ers can't give a 404 if you exceed the page number
+        :param soup: BeautifulSoup instance
+        :return:
+        """
+        # check if you passed the last page. Emag doesn't return 404, but the
+        # first page and so it makes crawlers to go into an infinite loop
+        cr_page = soup.find("link", {"rel": "canonical"})['href']
+        if cr_page:
+            if self.crawled_fpage:
+                if cr_page == self.first_page:
+                    return True
+            else:
+                self.crawled_fpage, self.first_page = True, cr_page
+
+        return False
 
     def scrap_deals(self):
         """

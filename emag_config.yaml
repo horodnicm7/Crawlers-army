@@ -1,11 +1,108 @@
 timeout: 1
 retry-timeout: 2
 max-page-number: 100
-debug: False
+debug: True
 page-template:
+    - url: 'https://www.emag.ro/ochelari-vr/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/ebook-reader/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/gamepad-joystick-uri-casti-gaming/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/console-hardware/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/televizoare/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/telefoane-mobile/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/power-bank-telefoane/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/casti-audio-telefoane/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
     - url: 'https://www.emag.ro/tablete/p{page}/c'
       sort:
           discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/carduri-memorie/filter/tip-memorie-f17,microsd-v15568/tip-memorie-f17,microsdhc-v15569/tip-memorie-f17,microsdxc-v15570/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/smartwatch/filter/pentru-f6952,barbati-v-490052/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/bratari-fitness/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/desktop-pc/filter/destinat-pentru-f7905,gaming-v-4670356/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/monitoare-lcd-led/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/solid-state_drive_ssd_/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/placi_video/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/ssd-uri-externe/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/tablete-grafice/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/laptopuri/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
+    - url: 'https://www.emag.ro/tablete/p{page}/c'
+      sort:
+          discount: 'descending'
+          new-price: 'descending'
+          old-price: 'ascending'
       filters:
           max-price: 3000
           min-price: 1000
