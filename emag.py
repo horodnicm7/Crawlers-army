@@ -71,6 +71,9 @@ class Emag(Bot):
 
             page = self.download_page(user_agent=agent)
 
+            if page == '':
+                continue
+
             soup = BeautifulSoup(page, parser)
 
             if self.is_cheap_trap(soup):
@@ -113,7 +116,6 @@ class Emag(Bot):
 
         if has_sort:
             products = self.apply_sort_criteria(products)
-            print("Displaying....")
             for item in products:
                 item.display()
 
@@ -131,7 +133,9 @@ def main():
         'max_page_number': config.get('max-page-number', 100),
         'debug': config.get('debug', False),
         'sleep_flexibility': config.get('sleep-flexibility', 3),
-        'proxy_fallback': config.get('fallback-on-proxies', False)
+        'proxy_fallback': config.get('fallback-on-proxies', False),
+        'max_no_requests': config.get('max-number-of-requests-per-proxy', 0),
+        'proxy_timeout': config.get('proxy-check-timeout', 10)
     }
 
     for category in config['page-template']:

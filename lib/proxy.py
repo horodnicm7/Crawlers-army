@@ -7,10 +7,16 @@ from lib.singleton import Singleton
 class RotatingProxyServer(object, metaclass=Singleton):
     __proxies = []
     __accepted_country_codes = ['AT', 'BG', 'FR', 'HU', 'MT', 'NL', 'RU', 'UA', 'GB']
+    __tries = 0
+    current_proxy = None
+    max_no_req = 10
+    proxy_timeout = 10
 
-    def __init__(self, target_url, debug=False):
+    def __init__(self, target_url, debug=False, max_no_requests=10, proxy_timeout=10):
         self.target_url = target_url
         self.debug = debug
+        self.max_no_req = max_no_requests
+        self.proxy_timeout = proxy_timeout
         self.fetch_list_of_proxies()
 
     def fetch_list_of_proxies(self):
@@ -35,9 +41,8 @@ class RotatingProxyServer(object, metaclass=Singleton):
         print(self.__proxies)
         print(len(self.__proxies))
 
-    def get_random_proxy(self):
+    def __change_proxy(self):
         req = Request(self.target_url)
-
         while True:
             # get a random proxy server and try it
             index = random.randrange(len(self.__proxies))
@@ -50,10 +55,22 @@ class RotatingProxyServer(object, metaclass=Singleton):
 
             # Make the call
             try:
-                data = urlopen(req).read().decode('utf8')
-                print(data)
+                data = urlopen(req, timeout=self.proxy_timeout).read().decode('utf8')
+                if not data:
+                    raise
+
+                if self.debug:
+                    print('[DEBUG] Using {}:{} as proxy'.format(proxy['ip'], proxy['port']))
                 return proxy
             except Exception:  # If there's an error, delete this proxy and find another one
                 del self.__proxies[index]
                 if self.debug:
                     print('[DEBUG] Proxy ' + proxy['ip'] + ':' + proxy['port'] + ' deleted.')
+
+    def get_random_proxy(self):
+        if not self.__tries % self.max_no_req:
+            self.__tries = 0
+            self.current_proxy = self.__change_proxy()
+
+        self.__tries += 1
+        return self.current_proxy

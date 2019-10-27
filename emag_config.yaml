@@ -4,7 +4,9 @@ max-page-number: 100
 debug: True
 sleep-between-categories: 2
 sleep-flexibility: 3
-fallback-on-proxies: False
+fallback-on-proxies: True
+max-number-of-requests-per-proxy: 5
+proxy-check-timeout: 3
 page-template:
     - url: 'https://www.emag.ro/ochelari-vr/p{page}/c'
       sort:

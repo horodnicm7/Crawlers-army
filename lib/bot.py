@@ -21,11 +21,13 @@ class Bot(object):
     _filters = {}
     _sleep_flexibility = 3
     _proxy_fallback = False
+    _proxy = None
 
     _page_template = ''
 
     def __init__(self, url='', retry_timeout=1, timeout=0.75, max_page_number=100, debug=False, page_template='',
-                 filters=None, sort=None, sleep_flexibility=3, proxy_fallback=False):
+                 filters=None, sort=None, sleep_flexibility=3, proxy_fallback=False, max_no_requests=10,
+                 proxy_timeout=10):
         """
         :param url: base url
         :param retry_timeout: time to sleep between 2 consecutive requests on the same page
@@ -50,6 +52,19 @@ class Bot(object):
         self.parser = 'html.parser'
         self.crawled_fpage = False
         self.first_page = ''
+
+        if proxy_fallback:
+            self._proxy = RotatingProxyServer(url, debug, max_no_requests, proxy_timeout)
+
+        self.__init_robotparser()
+
+    @property
+    def proxy_fallback(self):
+        return self._proxy_fallback
+
+    @property
+    def proxy(self):
+        return self._proxy
 
     @property
     def sort(self):
@@ -104,21 +119,23 @@ class Bot(object):
 
         return self._page_template.format(page=self._page_number)
 
+    def __init_robotparser(self):
+        # init the robots.txt parser
+        self.robot_parser = robotparser.RobotFileParser()
+        self.robot_parser.set_url(self._url + '/robots.txt')
+        self.robot_parser.read()
+
     def get_valid_user_agent(self, max_no_hops=10):
         """
         Tries to get a valid user agent in maximum 10 attempts.
         :param max_no_hops: maximum number of tries to get page content
         :return: 'default-agent' if no valid agent is found or one of the form 'Scrappy1111111'
         """
-        # init the robots.txt parser
-        parser = robotparser.RobotFileParser()
-        parser.set_url(self._url + '/robots.txt')
-        parser.read()
 
         # trying to get a valid agent name in less than 10 attempts
         user_agent = 'Scrappy'
         no_hops = 0
-        while not parser.can_fetch(user_agent, self._url):
+        while not self.robot_parser.can_fetch(user_agent, self._url):
             if user_agent[-1].isdigit():
                 user_agent = user_agent[:-1] + str(int(user_agent[-1]) + 1)
             else:
@@ -144,13 +161,25 @@ class Bot(object):
         if not url:
             url = self._url
 
+        if not self.robot_parser.can_fetch(user_agent, url):
+            if self.debug:
+                print('[DEBUG] Url forbidden in robots.txt: {}'.format(url))
+
+            return ''
+
         if not user_agent:
             user_agent = self.get_valid_user_agent()
 
-        if self._debug:
+        if self.debug:
             print('[DEBUG] Downloading: [' + url + '] ... ')
         page = None
         req = urllib.request.Request(url)
+
+        # try to use proxy servers if it's specified in config
+        if self.proxy_fallback:
+            proxy_server = self.proxy.get_random_proxy()
+            req.set_proxy(proxy_server['ip'] + ':' + proxy_server['port'], 'https')
+
         req.add_header('User-agent', user_agent)
 
         for i in range(max_no_hops):
