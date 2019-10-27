@@ -22,13 +22,16 @@ class Bot(object, metaclass=Singleton):
     _page_template = ''
 
     def __init__(self, url='', retry_timeout=1, timeout=0.75, max_page_number=100, debug=False, page_template='',
-                 filters={}):
+                 filters=None, sort=None):
         """
         :param url: base url
         :param retry_timeout: time to sleep between 2 consecutive requests on the same page
         :param timeout: time to sleep between 2 consecutive requests for different pages
         :param max_page_number: maximum page number to scrap
-        :param debug:
+        :param debug: whether to display additional info on the process
+        :param page_template: starting page template to built urls
+        :param filters: filters to consider when displaying a product
+        :param sort: sort criterias before displaying products
         """
         self._url = url
         self._retry_timeout = retry_timeout
@@ -36,8 +39,13 @@ class Bot(object, metaclass=Singleton):
         self._debug = debug
         self._timeout = timeout
         self._filters = filters
+        self._sort = sort
         self._page_template = page_template
         self.parser = 'html.parser'
+
+    @property
+    def sort(self):
+        return self._sort
 
     @property
     def timeout(self):
@@ -208,6 +216,46 @@ class Bot(object, metaclass=Singleton):
                 return False
 
         return True
+
+    def apply_sort_criteria(self, products):
+        """
+        :param products: list of Products to sort
+        :type products: list of Product
+        :return: a sorted list of products
+        """
+        if not self.sort or not isinstance(self.sort, dict):
+            return products
+
+        discount_crit = self.sort.get('discount')
+        old_price_crit = self.sort.get('old-price')
+        new_price_crit = self.sort.get('new-price')
+        desc = False
+
+        if discount_crit:
+            discount_crit = discount_crit.lower()
+            if discount_crit == 'descending':
+                desc = True
+
+            products.sort(key=lambda prod: prod.discount, reverse=desc)
+            return products
+
+        if old_price_crit:
+            old_price_crit = old_price_crit.lower()
+            if old_price_crit == 'descending':
+                desc = True
+
+            products.sort(key=lambda prod: prod.old_price, reverse=desc)
+            return products
+
+        if new_price_crit:
+            new_price_crit = new_price_crit.lower()
+            if new_price_crit == 'descending':
+                desc = True
+
+            products.sort(key=lambda prod: prod.price, reverse=desc)
+            return products
+
+        return products
 
     def scrap_deals(self):
         """

@@ -74,13 +74,16 @@ class Cel(Bot):
         agent = self.get_valid_user_agent()
         url_path = urlparse(self._page_template)
         trap_url = url_path.path.format(page=2)
-        long_way_passed = False
+        long_way_passed, has_sort = False, self.sort is not None
+
+        if has_sort:
+            products = []
 
         while True:
             self.url = self.get_next_page_url()
 
             if not self.url:
-                return
+                break
 
             page = self.download_page(user_agent=agent)
             soup = BeautifulSoup(page, self.parser)
@@ -89,7 +92,7 @@ class Cel(Bot):
             # first page and so it makes crawlers to go into an infinite loop
             next_page = soup.find("link", {"rel": "next"})
             if next_page and trap_url in str(next_page) and long_way_passed:
-                return
+                break
 
             root = soup.find('div', class_='productlisting')
 
@@ -127,10 +130,18 @@ class Cel(Bot):
 
                 item = Product(new_price=new_price, old_price=old_price, discount=discount, name=name_info, url=url)
                 if self.apply_filters(item):
-                    item.display()
+                    if has_sort:
+                        products.append(item)
+                    else:
+                        item.display()
 
             long_way_passed = True
             sleep(self.timeout)
+
+        if has_sort:
+            products = self.apply_sort_criteria(products)
+            for item in products:
+                item.display()
 
 
 def main():
@@ -150,6 +161,7 @@ def main():
     for category in config['page-template']:
         options['page_template'] = category['url']
         options['filters'] = category.get('filters')
+        options['sort'] = category.get('sort')
 
         cel = Cel(**options)
         cel.scrap_deals()

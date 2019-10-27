@@ -76,12 +76,13 @@ class Flanco(Bot):
             return
 
         agent = self.get_valid_user_agent()
+        has_sort, products = self.sort is not None, []
 
         while True:
             self.url = self.get_next_page_url()
 
             if not self.url:
-                return
+                break
 
             page = self.download_page(user_agent=agent)
             soup = BeautifulSoup(page, self.parser)
@@ -122,9 +123,17 @@ class Flanco(Bot):
 
                 item = Product(new_price=new_price, old_price=old_price, discount=discount, name=name_info, url=url)
                 if self.apply_filters(item):
-                    item.display()
+                    if has_sort:
+                        products.append(item)
+                    else:
+                        item.display()
 
             sleep(self.timeout)
+
+        if has_sort:
+            products = self.apply_sort_criteria(products)
+            for item in products:
+                item.display()
 
 
 def main():
@@ -144,6 +153,7 @@ def main():
     for category in config['page-template']:
         options['page_template'] = category['url']
         options['filters'] = category.get('filters')
+        options['sort'] = category.get('sort')
 
         flanco = Flanco(**options)
         flanco.scrap_deals()

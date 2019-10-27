@@ -4,6 +4,8 @@ max-page-number: 100
 debug: False
 page-template:
     - url: 'https://www.emag.ro/tablete/p{page}/c'
+      sort:
+          discount: 'descending'
       filters:
           max-price: 3000
           min-price: 1000

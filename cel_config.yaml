@@ -4,5 +4,9 @@ max-page-number: 100
 debug: True
 page-template:
     - url: 'https://www.cel.ro/laptop-laptopuri/0a-{page}'
+      sort:
+        discount: 'descending'
+        new-price: 'descending'
+        old-price: 'ascending'
       filters:
           ""

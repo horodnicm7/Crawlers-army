@@ -64,12 +64,14 @@ class Emag(Bot):
         trap_url = url_path.path.format(page=2)
         print(trap_url)
         long_way_passed = False  # to signal that crawling has started and to avoid interruption at first page
+        has_sort = self.sort is not None
+        products = []
 
         while True:
             self.url = self.get_next_page_url()
 
             if not self.url:
-                return
+                break
 
             page = self.download_page(user_agent=agent)
 
@@ -79,7 +81,7 @@ class Emag(Bot):
             # first page and so it makes crawlers to go into an infinite loop
             next_page = soup.find("link", {"rel": "next"})
             if next_page and trap_url in str(next_page) and long_way_passed:
-                return
+                break
 
             root = str(soup.find('div', id='card_grid'))
             soup = BeautifulSoup(root, parser)
@@ -109,10 +111,18 @@ class Emag(Bot):
 
                 item = Product(new_price=new_price, old_price=old_price, discount=discount, name=name_info, url=url)
                 if self.apply_filters(item):
-                    item.display()
+                    if has_sort:
+                        products.append(item)
+                    else:
+                        item.display()
 
             long_way_passed = True
             sleep(self.timeout)
+
+        if has_sort:
+            products = self.apply_sort_criteria(products)
+            for item in products:
+                item.display()
 
 
 def main():
@@ -132,6 +142,7 @@ def main():
     for category in config['page-template']:
         options['page_template'] = category['url']
         options['filters'] = category.get('filters')
+        options['sort'] = category.get('sort')
 
         emag = Emag(**options)
         emag.scrap_deals()
