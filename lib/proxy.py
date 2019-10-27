@@ -1,18 +1,19 @@
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import random
+from lib.singleton import Singleton
 
 
-class RotatingProxyServer(object):
+class RotatingProxyServer(object, metaclass=Singleton):
     __proxies = []
     __accepted_country_codes = ['AT', 'BG', 'FR', 'HU', 'MT', 'NL', 'RU', 'UA', 'GB']
 
     def __init__(self, target_url, debug=False):
         self.target_url = target_url
         self.debug = debug
-        self.get_list_of_proxies()
+        self.fetch_list_of_proxies()
 
-    def get_list_of_proxies(self):
+    def fetch_list_of_proxies(self):
         proxies_req = Request('https://www.sslproxies.org/')
         proxies_req.add_header('User-Agent', str(random.randrange(100, 20000)))
         proxies_doc = urlopen(proxies_req).read().decode('utf8')
@@ -56,7 +57,3 @@ class RotatingProxyServer(object):
                 del self.__proxies[index]
                 if self.debug:
                     print('[DEBUG] Proxy ' + proxy['ip'] + ':' + proxy['port'] + ' deleted.')
-
-
-rot_proxy = RotatingProxyServer('https://www.cel.ro', debug=True)
-print(rot_proxy.get_random_proxy())

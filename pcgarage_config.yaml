@@ -2,5 +2,8 @@ timeout: 1
 retry-timeout: 2
 max-page-number: 100
 debug: True
+sleep-between-categories: 2
+sleep-flexibility: 3
+fallback-on-proxies: False
 page-template:
     - url: 'https://www.pcgarage.ro/notebook-laptop/pagina{page}/'

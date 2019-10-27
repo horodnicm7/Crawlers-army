@@ -1,3 +1,4 @@
+import random
 import re
 import urllib.request
 
@@ -7,6 +8,7 @@ from urllib.error import URLError, HTTPError, ContentTooShortError
 from time import sleep
 
 from lib.product import Product
+from lib.proxy import RotatingProxyServer
 
 
 class Bot(object):
@@ -17,11 +19,13 @@ class Bot(object):
     _soup = None
     _url = ''
     _filters = {}
+    _sleep_flexibility = 3
+    _proxy_fallback = False
 
     _page_template = ''
 
     def __init__(self, url='', retry_timeout=1, timeout=0.75, max_page_number=100, debug=False, page_template='',
-                 filters=None, sort=None):
+                 filters=None, sort=None, sleep_flexibility=3, proxy_fallback=False):
         """
         :param url: base url
         :param retry_timeout: time to sleep between 2 consecutive requests on the same page
@@ -40,6 +44,8 @@ class Bot(object):
         self._filters = filters
         self._sort = sort
         self._page_template = page_template
+        self._sleep_flexibility = sleep_flexibility
+        self._proxy_fallback = proxy_fallback
 
         self.parser = 'html.parser'
         self.crawled_fpage = False
@@ -276,6 +282,9 @@ class Bot(object):
                 self.crawled_fpage, self.first_page = True, cr_page
 
         return False
+
+    def sleep_between_requests(self):
+        sleep(self.timeout + random.randrange(self._sleep_flexibility))
 
     def scrap_deals(self):
         """

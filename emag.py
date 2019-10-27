@@ -15,6 +15,7 @@
         pip install beautifulsoup4
         pip install pyyaml
 """
+import random
 import re as regex
 import warnings
 
@@ -108,7 +109,7 @@ class Emag(Bot):
                     else:
                         item.display()
 
-            sleep(self.timeout)
+            self.sleep_between_requests()
 
         if has_sort:
             products = self.apply_sort_criteria(products)
@@ -128,7 +129,9 @@ def main():
         'timeout': config.get('timeout', 0.75),
         'retry_timeout': config.get('retry-timeout', 0.75),
         'max_page_number': config.get('max-page-number', 100),
-        'debug': config.get('debug', False)
+        'debug': config.get('debug', False),
+        'sleep_flexibility': config.get('sleep-flexibility', 3),
+        'proxy_fallback': config.get('fallback-on-proxies', False)
     }
 
     for category in config['page-template']:
@@ -138,6 +141,8 @@ def main():
 
         emag = Emag(**options)
         emag.scrap_deals()
+
+        sleep(config['sleep-between-categories'] + random.randrange(config['sleep-flexibility']))
         print("")
 
 
