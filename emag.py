@@ -73,7 +73,7 @@ class Emag(Bot):
 
             page = self.download_page(user_agent=agent, max_no_hops=max_no_hops)
 
-            if page == '':
+            if not page:
                 continue
 
             soup = BeautifulSoup(page, parser)

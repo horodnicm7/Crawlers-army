@@ -1,5 +1,5 @@
 timeout: 1
-retry-timeout: 1
+retry-timeout: 2
 max-page-number: 100
 debug: True
 sleep-between-categories: 2
@@ -7,6 +7,8 @@ sleep-flexibility: 3
 fallback-on-proxies: False
 max-number-of-requests-per-proxy: 5
 proxy-check-timeout: 3
+write-to-files: True
+max-no-hops: 10
 page-template:
     - url: 'https://www.flanco.ro/telefoane-tablete/smartphone/p/{page}.html'
       filters:

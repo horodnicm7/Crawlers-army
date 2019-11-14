@@ -15,7 +15,10 @@
         pip install beautifulsoup4
         pip install pyyaml
 """
+import os
+import random
 import re as regex
+import shutil
 import warnings
 
 from bs4 import BeautifulSoup
@@ -71,7 +74,7 @@ class Flanco(Bot):
 
         return new_price
 
-    def scrap_deals(self):
+    def scrap_deals(self, file=None, max_no_hops=10):
         if not self.url:
             return
 
@@ -84,12 +87,14 @@ class Flanco(Bot):
             if not self.url:
                 break
 
-            page = self.download_page(user_agent=agent)
+            page = self.download_page(user_agent=agent, max_no_hops=max_no_hops)
             soup = BeautifulSoup(page, self.parser)
 
             root = soup.find('div', id='products-wrapper')
 
             if not root:
+                if self.debug:
+                    print('[DEBUG] No root products wrapper!')
                 break
 
             soup = BeautifulSoup(str(root), self.parser)
@@ -147,16 +152,36 @@ def main():
         'timeout': config.get('timeout', 0.75),
         'retry_timeout': config.get('retry-timeout', 0.75),
         'max_page_number': config.get('max-page-number', 100),
-        'debug': config.get('debug', False)
+        'debug': config.get('debug', False),
+        'sleep_flexibility': config.get('sleep-flexibility', 3),
+        'proxy_fallback': config.get('fallback-on-proxies', False),
+        'max_no_requests': config.get('max-number-of-requests-per-proxy', 0),
+        'proxy_timeout': config.get('proxy-check-timeout', 10)
     }
+
+    # clear current directory entries
+    if config.get('write-to-files'):
+        if os.path.exists('flanco'):
+            shutil.rmtree('flanco')
+        os.mkdir('flanco', 777)
 
     for category in config['page-template']:
         options['page_template'] = category['url']
         options['filters'] = category.get('filters')
         options['sort'] = category.get('sort')
 
+        file = None
+        if config.get('write-to-files'):
+            file = open('flanco//' + category['url'].split('//')[1].split('/')[1] + '.txt', 'w')
+
         flanco = Flanco(**options)
-        flanco.scrap_deals()
+        flanco.scrap_deals(file=file, max_no_hops=config.get('max-no-hops', 10))
+
+        if file:
+            file.close()
+
+        sleep(config['sleep-between-categories'] + random.randrange(config['sleep-flexibility']))
+        print("")
 
 
 main()
