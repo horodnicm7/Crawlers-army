@@ -190,7 +190,11 @@ class Bot(object):
             except (URLError, HTTPError, ContentTooShortError) as e:
                 if hasattr(e, 'code'):
                     if e.code < 500:
+                        if self.debug:
+                            print('[DEBUG] Got {} error code!'.format(e.code))
                         return None
+                if self.debug:
+                    print('[DEBUG] Retrying to download this page...')
                 sleep(self._retry_timeout)
         return page
 

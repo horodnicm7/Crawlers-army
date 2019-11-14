@@ -6,7 +6,12 @@ class Product(object):
         self.old_price = old_price
         self.url = url
 
-    def display(self):
-        print(self.name)
-        print('Old price: {}\tNew price: {}\nDiscount: {}%'.format(self.old_price, self.price, self.discount))
-        print('Url: {}\n'.format(self.url))
+    def display(self, file=None):
+        if file:
+            file.write(self.name + '\n')
+            file.write('Old price: {}\tNew price: {}\nDiscount: {}%\n'.format(self.old_price, self.price, self.discount))
+            file.write('Url: {}\n\n'.format(self.url))
+        else:
+            print(self.name)
+            print('Old price: {}\tNew price: {}\nDiscount: {}%'.format(self.old_price, self.price, self.discount))
+            print('Url: {}\n'.format(self.url))

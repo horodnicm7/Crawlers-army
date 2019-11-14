@@ -15,8 +15,10 @@
         pip install beautifulsoup4
         pip install pyyaml
 """
+import os
 import random
 import re as regex
+import shutil
 import warnings
 
 from bs4 import BeautifulSoup
@@ -54,7 +56,7 @@ class Emag(Bot):
 
         return new_price
 
-    def scrap_deals(self):
+    def scrap_deals(self, file=None, max_no_hops=10):
         if not self.url:
             return
 
@@ -69,7 +71,7 @@ class Emag(Bot):
             if not self.url:
                 break
 
-            page = self.download_page(user_agent=agent)
+            page = self.download_page(user_agent=agent, max_no_hops=max_no_hops)
 
             if page == '':
                 continue
@@ -110,14 +112,14 @@ class Emag(Bot):
                     if has_sort:
                         products.append(item)
                     else:
-                        item.display()
+                        item.display(file)
 
             self.sleep_between_requests()
 
         if has_sort:
             products = self.apply_sort_criteria(products)
             for item in products:
-                item.display()
+                item.display(file)
 
 
 def main():
@@ -138,13 +140,26 @@ def main():
         'proxy_timeout': config.get('proxy-check-timeout', 10)
     }
 
+    # clear current directory entries
+    if config.get('write-to-files'):
+        if os.path.exists('emag'):
+            shutil.rmtree('emag')
+        os.mkdir('emag', 777)
+
     for category in config['page-template']:
         options['page_template'] = category['url']
         options['filters'] = category.get('filters')
         options['sort'] = category.get('sort')
 
+        file = None
+        if config.get('write-to-files'):
+            file = open('emag//' + category['url'].split('//')[1].split('/')[1] + '.txt', 'w')
+
         emag = Emag(**options)
-        emag.scrap_deals()
+        emag.scrap_deals(file=file, max_no_hops=config.get('max-no-hops', 10))
+
+        if file:
+            file.close()
 
         sleep(config['sleep-between-categories'] + random.randrange(config['sleep-flexibility']))
         print("")
