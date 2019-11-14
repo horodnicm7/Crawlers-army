@@ -15,7 +15,10 @@
         pip install beautifulsoup4
         pip install pyyaml
 """
+import os
+import random
 import re as regex
+import shutil
 import warnings
 
 from bs4 import BeautifulSoup
@@ -63,7 +66,7 @@ class PCGarage(Bot):
 
         return None
 
-    def scrap_deals(self):
+    def scrap_deals(self, file=None, max_no_hops=10):
         if not self.url:
             return
 
@@ -77,7 +80,7 @@ class PCGarage(Bot):
             if not self.url:
                 break
 
-            page = self.download_page(user_agent=agent)
+            page = self.download_page(user_agent=agent, max_no_hops=max_no_hops)
 
             if not page:
                 if self.debug:
@@ -116,14 +119,14 @@ class PCGarage(Bot):
                     if has_sort:
                         products.append(item)
                     else:
-                        item.display()
+                        item.display(file=file)
 
             sleep(self.timeout)
 
         if has_sort:
             products = self.apply_sort_criteria(products)
             for item in products:
-                item.display()
+                item.display(file=file)
 
 
 def main():
@@ -137,16 +140,36 @@ def main():
         'timeout': config.get('timeout', 0.75),
         'retry_timeout': config.get('retry-timeout', 0.75),
         'max_page_number': config.get('max-page-number', 100),
-        'debug': config.get('debug', False)
+        'debug': config.get('debug', False),
+        'sleep_flexibility': config.get('sleep-flexibility', 3),
+        'proxy_fallback': config.get('fallback-on-proxies', False),
+        'max_no_requests': config.get('max-number-of-requests-per-proxy', 0),
+        'proxy_timeout': config.get('proxy-check-timeout', 10)
     }
+
+    # clear current directory entries
+    if config.get('write-to-files'):
+        if os.path.exists('pcgarage'):
+            shutil.rmtree('pcgarage')
+        os.mkdir('pcgarage', 777)
 
     for category in config['page-template']:
         options['page_template'] = category['url']
         options['filters'] = category.get('filters')
         options['sort'] = category.get('sort')
 
+        file = None
+        if config.get('write-to-files'):
+            file = open('pcgarage//' + category['url'].split('//')[1].split('/')[1] + '.txt', 'w')
+
         pcgarage = PCGarage(**options)
-        pcgarage.scrap_deals()
+        pcgarage.scrap_deals(file=file, max_no_hops=config.get('max-no-hops', 10))
+
+        if file:
+            file.close()
+
+        sleep(config['sleep-between-categories'] + random.randrange(config['sleep-flexibility']))
+        print("")
 
 
 main()

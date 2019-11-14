@@ -133,7 +133,7 @@ class Bot(object):
         """
 
         # trying to get a valid agent name in less than 10 attempts
-        user_agent = 'Scrappy'
+        user_agent = 'JohnnyTheBeggar'
         no_hops = 0
         while not self.robot_parser.can_fetch(user_agent, self._url):
             if user_agent[-1].isdigit():
@@ -144,7 +144,12 @@ class Bot(object):
             no_hops += 1
             # error in finding a valid name
             if no_hops == max_no_hops:
-                return 'default-agent'
+                if self.debug:
+                    print('[DEBUG] Agent: fallback-agent')
+                return 'fallback-agent'
+
+        if self.debug:
+            print('[DEBUG] Agent: {}'.format(user_agent))
 
         return user_agent
 

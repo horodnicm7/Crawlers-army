@@ -131,14 +131,14 @@ class Flanco(Bot):
                     if has_sort:
                         products.append(item)
                     else:
-                        item.display()
+                        item.display(file=file)
 
             sleep(self.timeout)
 
         if has_sort:
             products = self.apply_sort_criteria(products)
             for item in products:
-                item.display()
+                item.display(file=file)
 
 
 def main():
